@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router"
 import { ProductCard } from "@/components/ProductCard"
 import { getProductList, getProductImage } from "@/api/productApi"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function ProductListPage() {
+  const [searchParams] = useSearchParams()
+  const searchQuery = searchParams.get("search") || ""
+
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [pageData, setPageData] = useState<PageResponseDTO<Product> | null>(null)
@@ -12,14 +16,23 @@ export default function ProductListPage() {
   const pageSize = 12
 
   useEffect(() => {
-    fetchProducts(currentPage)
-  }, [currentPage])
+    fetchProducts(currentPage, searchQuery)
+  }, [currentPage, searchQuery])
 
-  const fetchProducts = async (page: number) => {
+  const fetchProducts = async (page: number, search: string) => {
     try {
       setLoading(true)
       const response = await getProductList({ page, size: pageSize })
-      setProducts(response.data.dtoList)
+      let filteredProducts = response.data.dtoList
+
+      // 검색어가 있으면 상품명으로 필터링
+      if (search) {
+        filteredProducts = filteredProducts.filter(product =>
+          product.pname.toLowerCase().includes(search.toLowerCase())
+        )
+      }
+
+      setProducts(filteredProducts)
       setPageData(response.data)
     } catch (error) {
       console.error('상품 목록 조회 실패:', error)

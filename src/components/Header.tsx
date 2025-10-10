@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { ShoppingCart, Search, User, Menu, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,11 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useCartStore } from "@/lib/cart-store"
 import { useAuthStore } from "@/lib/auth-store"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 
 export function Header() {
+  const navigate = useNavigate()
   const totalItems = useCartStore((state) => state.getTotalItems())
   const { user, isAuthenticated, logout } = useAuthStore()
+  const [searchQuery, setSearchQuery] = useState("")
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,13 +37,37 @@ export function Header() {
 
         <div className="flex items-center gap-4">
           <div className="hidden lg:flex items-center gap-2">
-            <div className="relative">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (searchQuery.trim()) {
+                  navigate(`/products?search=${encodeURIComponent(searchQuery)}`)
+                }
+              }}
+              className="relative"
+            >
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input type="search" placeholder="상품 검색..." className="w-64 pl-9" />
-            </div>
+              <Input
+                type="search"
+                placeholder="상품 검색..."
+                className="w-64 pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </form>
           </div>
 
-          <Button variant="ghost" size="icon" className="lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => {
+              const query = prompt("상품명을 입력하세요")
+              if (query && query.trim()) {
+                navigate(`/products?search=${encodeURIComponent(query)}`)
+              }
+            }}
+          >
             <Search className="h-5 w-5" />
           </Button>
 
