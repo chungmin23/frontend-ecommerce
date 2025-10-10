@@ -3,13 +3,6 @@ import { ProductCard } from "./ProductCard"
 import { Sparkles } from "lucide-react"
 import { getProductList, getProductImage } from "@/api/productApi"
 
-interface Product {
-  pno: number
-  pname: string
-  price: number
-  uploadFileNames?: string[]
-}
-
 export function ProductGrid() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)

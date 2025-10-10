@@ -29,15 +29,6 @@ export function Header() {
             <Link to="/products" className="text-sm font-medium hover:text-accent transition-colors">
               전체상품
             </Link>
-            <Link to="/new" className="text-sm font-medium hover:text-accent transition-colors">
-              신상품
-            </Link>
-            <Link to="/best" className="text-sm font-medium hover:text-accent transition-colors">
-              베스트
-            </Link>
-            <Link to="/sale" className="text-sm font-medium hover:text-accent transition-colors">
-              세일
-            </Link>
           </nav>
         </div>
 

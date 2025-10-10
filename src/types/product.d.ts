@@ -1,10 +1,11 @@
 interface Product {
-  id: number
-  name: string
-  description: string
+  pno: number
+  pname: string
+  pdesc?: string
   price: number
-  category: string
-  stock: number
+  category?: string
+  stock?: number
+  uploadFileNames?: string[]
 }
 
 interface ProductRecommendation {

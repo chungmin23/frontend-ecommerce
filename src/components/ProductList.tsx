@@ -4,13 +4,6 @@ import { Heart, Star, ShoppingCart as CartIcon } from 'lucide-react';
 import { getProductList, getProductImage } from '../api/productApi';
 import { changeCartItem } from '../api/cartApi';
 
-interface Product {
-  pno: number;
-  pname: string;
-  price: number;
-  uploadFileNames?: string[];
-}
-
 const ProductList: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);

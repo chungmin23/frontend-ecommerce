@@ -1,36 +1,31 @@
 import { createBrowserRouter } from "react-router";
-
-
 import { lazy, Suspense } from "react";
-import BasicLayout from "../layouts/basicLayout";
-import todoRouter from "./todoRouter";
-import productRouter from "./productRouter";
+import { MainLayout } from "../layouts/MainLayout";
 
+const Loading = () => <div className="flex items-center justify-center min-h-screen"><div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent"></div></div>
 
-const Loading = () => <div>Loading....</div>
-
-const Main = lazy(() => import("../pages/mainPage"))
-const About = lazy(() => import("../pages/aboutPage"))
-
-
+const HomePage = lazy(() => import("../pages/HomePage"))
+const ProductListPage = lazy(() => import("../pages/ProductListPage"))
+const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"))
 
 const router = createBrowserRouter([
   {
-   path: "",
-   Component: BasicLayout,
-   children : [
-    {
-      index: true,
-      element: <Suspense fallback={<Loading/>}><Main/></Suspense> 
-    },
-    {
-      path: 'about',
-      element: <Suspense fallback={<Loading/>}><About/></Suspense>
-    },
-    todoRouter(),
-    productRouter()
-
-   ]
+    path: "",
+    Component: MainLayout,
+    children: [
+      {
+        index: true,
+        element: <Suspense fallback={<Loading/>}><HomePage/></Suspense>
+      },
+      {
+        path: "products",
+        element: <Suspense fallback={<Loading/>}><ProductListPage/></Suspense>
+      },
+      {
+        path: "products/:id",
+        element: <Suspense fallback={<Loading/>}><ProductDetailPage/></Suspense>
+      }
+    ]
   }
 ]);
 

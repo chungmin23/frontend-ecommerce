@@ -25,12 +25,12 @@ export const searchSimilarProducts = async (query: string, topK: number = 5): Pr
 
 // 기존 Product CRUD APIs
 // 상품 목록 조회
-export const getProductList = (params?: PageParam) => {
+export const getProductList = (params?: PageParam): Promise<{ data: PageResponseDTO<Product> }> => {
   return axiosInstance.get(`${prefix}/list`, { params })
 }
 
 // 상품 상세 조회
-export const getProduct = (pno: number | string | undefined) => {
+export const getProduct = (pno: number | string | undefined): Promise<{ data: Product }> => {
   return axiosInstance.get(`${prefix}/${pno}`)
 }
 

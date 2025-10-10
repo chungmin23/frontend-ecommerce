@@ -4,14 +4,6 @@ import { Heart, Star, ShoppingCart, Minus, Plus, ArrowLeft } from 'lucide-react'
 import { getProduct, getProductImage } from '../api/productApi';
 import { changeCartItem } from '../api/cartApi';
 
-interface Product {
-  pno: number;
-  pname: string;
-  price: number;
-  pdesc?: string;
-  uploadFileNames?: string[];
-}
-
 const ProductDetail: React.FC = () => {
   const { pno } = useParams<{ pno: string }>();
   const navigate = useNavigate();

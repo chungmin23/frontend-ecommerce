@@ -113,20 +113,22 @@ const RecommendPage = () => {
             <h3 className="text-lg font-semibold mb-4">Recommended Products</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {recommendation.recommendedProducts.map((product) => (
-                <div key={product.id} className="border rounded-lg p-4 hover:shadow-lg transition">
-                  <h4 className="font-bold text-lg mb-2">{product.name}</h4>
-                  <p className="text-gray-600 text-sm mb-3">{product.description}</p>
+                <div key={product.pno} className="border rounded-lg p-4 hover:shadow-lg transition">
+                  <h4 className="font-bold text-lg mb-2">{product.pname}</h4>
+                  <p className="text-gray-600 text-sm mb-3">{product.pdesc || 'No description available'}</p>
                   <div className="flex justify-between items-center">
                     <div>
                       <div className="text-blue-600 font-bold text-xl">
-                        ${product.price.toFixed(2)}
+                        ₩{product.price.toLocaleString()}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        Category: {product.category}
-                      </div>
+                      {product.category && (
+                        <div className="text-sm text-gray-500">
+                          Category: {product.category}
+                        </div>
+                      )}
                     </div>
                     <div className="text-sm">
-                      {product.stock > 0 ? (
+                      {product.stock && product.stock > 0 ? (
                         <span className="text-green-600">In Stock ({product.stock})</span>
                       ) : (
                         <span className="text-red-600">Out of Stock</span>
