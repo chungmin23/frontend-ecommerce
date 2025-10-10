@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/user/Downloads/shopping-mall/**)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run dev:*)",
+      "Read(//c/Users/user/Downloads/shopping-mall (1)/**)",
+      "Read(//c/Users/user/Downloads/shopping-mall (1)/src/components/**)",
+      "Read(//c/Users/user/Downloads/shopping-mall (1)/components/**)",
+      "Read(//c/Users/user/Downloads/shopping-mall (1)/src/**)",
+      "Read(//c/Users/user/Downloads/shopping-mall (1)/components/ui/**)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
