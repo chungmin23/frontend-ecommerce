@@ -21,7 +21,6 @@ export default function SignupPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }))
     }
@@ -42,8 +41,8 @@ export default function SignupPage() {
 
     if (!formData.password) {
       newErrors.password = "비밀번호를 입력해주세요"
-    } else if (formData.password.length < 6) {
-      newErrors.password = "비밀번호는 최소 6자 이상이어야 합니다"
+    } else if (formData.password.length < 4) {  // ← 백엔드는 4자 이상
+      newErrors.password = "비밀번호는 최소 4자 이상이어야 합니다"
     }
 
     if (!formData.confirmPassword) {
@@ -66,21 +65,47 @@ export default function SignupPage() {
     try {
       setLoading(true)
 
-      // API 호출
+      console.log('📝 회원가입 시도:', { 
+        email: formData.email, 
+        name: formData.name,
+        password: '***'
+      })
+
+      // ✅ API 호출 (signup 함수 내부에서 자동 로그인 처리됨)
       const response = await signup({
         email: formData.email,
         password: formData.password,
         name: formData.name
       })
 
-      // 회원가입 성공 후 자동 로그인
-      loginToStore(response.user.email, formData.password)
+      console.log('✅ 회원가입 & 자동 로그인 성공:', response)
 
-      alert("회원가입이 완료되었습니다!")
+      // ✅ Zustand 스토어에 로그인 정보 저장
+      loginToStore(response.email, formData.password)
+
+      alert(`환영합니다, ${response.nickname}님! 회원가입이 완료되었습니다.`)
       navigate("/")
-    } catch (error) {
-      console.error("회원가입 실패:", error)
-      alert("회원가입에 실패했습니다. 다시 시도해주세요.")
+      
+    } catch (error: any) {
+      console.error("❌ 회원가입 실패:", error)
+
+      let errorMessage = "회원가입에 실패했습니다."
+
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.response?.data?.error) {
+        if (error.response.data.error.includes('중복')) {
+          errorMessage = "이미 가입된 이메일입니다."
+        } else {
+          errorMessage = error.response.data.error
+        }
+      } else if (error.response?.status === 400) {
+        errorMessage = "잘못된 요청입니다. 입력 정보를 확인해주세요."
+      } else if (error.response?.status === 500) {
+        errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+      }
+
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -141,7 +166,7 @@ export default function SignupPage() {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="6자 이상 입력"
+                placeholder="4자 이상 입력"
                 value={formData.password}
                 onChange={handleChange}
                 className={errors.password ? "border-red-500" : ""}
