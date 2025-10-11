@@ -22,8 +22,11 @@ export default function ProductListPage() {
   const fetchProducts = async (page: number, search: string) => {
     try {
       setLoading(true)
+      console.log('📦 Fetching products:', { page, size: pageSize })
       const response = await getProductList({ page, size: pageSize })
-      let filteredProducts = response.data.dtoList
+      console.log('✅ Product list response:', response)
+
+      let filteredProducts = response.dtoList
 
       // 검색어가 있으면 상품명으로 필터링
       if (search) {
@@ -33,9 +36,9 @@ export default function ProductListPage() {
       }
 
       setProducts(filteredProducts)
-      setPageData(response.data)
+      setPageData(response)
     } catch (error) {
-      console.error('상품 목록 조회 실패:', error)
+      console.error('❌ 상품 목록 조회 실패:', error)
     } finally {
       setLoading(false)
     }

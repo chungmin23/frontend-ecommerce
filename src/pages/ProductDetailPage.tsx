@@ -26,10 +26,12 @@ export default function ProductDetailPage() {
   const fetchProduct = async (pno: string) => {
     try {
       setLoading(true)
+      console.log('📦 Fetching product:', pno)
       const response = await getProduct(pno)
-      setProduct(response.data)
+      console.log('✅ Product detail response:', response)
+      setProduct(response)
     } catch (error) {
-      console.error('상품 조회 실패:', error)
+      console.error('❌ 상품 조회 실패:', error)
     } finally {
       setLoading(false)
     }

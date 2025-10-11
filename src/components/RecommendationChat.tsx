@@ -72,12 +72,30 @@ export function RecommendationChat({ isOpen, onClose }: RecommendationChatProps)
       }
 
       setMessages((prev) => [...prev, botMessage])
-    } catch (error) {
-      console.error("Failed to get recommendation:", error)
+    } catch (error: any) {
+      console.error("❌ Failed to get recommendation:", error)
+      console.error("Error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      })
+
+      let errorContent = "죄송합니다. 추천을 가져오는 중 오류가 발생했습니다."
+
+      if (error.response?.status === 405) {
+        errorContent = "백엔드 API 메서드 오류입니다. 관리자에게 문의해주세요."
+      } else if (error.response?.status === 401) {
+        errorContent = "로그인이 필요한 서비스입니다. 로그인 후 다시 시도해주세요."
+      } else if (error.response?.status === 500) {
+        errorContent = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+      } else if (error.message) {
+        errorContent += `\n오류: ${error.message}`
+      }
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        content: "죄송합니다. 추천을 가져오는 중 오류가 발생했습니다. 다시 시도해주세요.",
+        content: errorContent,
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])
@@ -94,8 +112,8 @@ export function RecommendationChat({ isOpen, onClose }: RecommendationChatProps)
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-2xl h-[600px] bg-background rounded-lg shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/50 p-4 backdrop-blur-sm">
+      <div className="chat-bot relative w-full max-w-md h-[calc(100vh-100px)] max-h-[700px] mr-4 bg-background rounded-lg shadow-2xl flex flex-col animate-in fade-in slide-in-from-right duration-300" style={{ marginTop: "1000px" }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
