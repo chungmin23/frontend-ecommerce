@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ShoppingCart, Search, User, Menu, LogOut } from "lucide-react"
+import { ShoppingCart, Search, User, Menu, LogOut, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -13,12 +13,14 @@ import {
 import { useCartStore } from "@/lib/cart-store"
 import { useAuthStore } from "@/lib/auth-store"
 import { Link, useNavigate } from "react-router"
+import { RecommendationChat } from "@/components/RecommendationChat"
 
 export function Header() {
   const navigate = useNavigate()
   const totalItems = useCartStore((state) => state.getTotalItems())
   const { user, isAuthenticated, logout } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState("")
+  const [isRecommendationOpen, setIsRecommendationOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -32,6 +34,15 @@ export function Header() {
             <Link to="/products" className="text-sm font-medium hover:text-accent transition-colors">
               전체상품
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setIsRecommendationOpen(true)}
+            >
+              <Sparkles className="h-4 w-4" />
+              AI 추천
+            </Button>
           </nav>
         </div>
 
@@ -126,6 +137,11 @@ export function Header() {
           </Button>
         </div>
       </div>
+
+      <RecommendationChat
+        isOpen={isRecommendationOpen}
+        onClose={() => setIsRecommendationOpen(false)}
+      />
     </header>
   )
 }

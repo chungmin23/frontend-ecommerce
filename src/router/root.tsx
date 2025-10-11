@@ -10,6 +10,7 @@ const ProductDetailPage = lazy(() => import("../pages/ProductDetailPage"))
 const LoginPage = lazy(() => import("../pages/LoginPage"))
 const SignupPage = lazy(() => import("../pages/SignupPage"))
 const CartPage = lazy(() => import("../pages/CartPage"))
+const MyPage = lazy(() => import("../pages/MyPage"))
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
       {
         path: "cart",
         element: <Suspense fallback={<Loading/>}><CartPage/></Suspense>
+      },
+      {
+        path: "mypage",
+        element: <Suspense fallback={<Loading/>}><MyPage/></Suspense>
       }
     ]
   }

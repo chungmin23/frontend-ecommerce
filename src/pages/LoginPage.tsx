@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useAuthStore } from "@/lib/auth-store"
+import { login as loginApi } from "@/api/auth"
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const login = useAuthStore((state) => state.login)
+  const loginToStore = useAuthStore((state) => state.login)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -47,20 +49,45 @@ export default function LoginPage() {
     }
 
     try {
-      // TODO: API 연동
-      // const response = await loginApi({ email: formData.email, password: formData.password })
+      setLoading(true)
 
-      // 임시 로그인 처리
-      login({
+      console.log('🔄 로그인 시도:', { email: formData.email })
+
+      // API 호출
+      const response = await loginApi({
         email: formData.email,
-        name: formData.email.split('@')[0],
+        password: formData.password
       })
 
-      alert("로그인 성공!")
+      console.log('✅ 로그인 성공:', response)
+
+      // ✅ 수정: response.user.email → response.email
+      loginToStore(response.email, formData.password)
+
+      alert(`환영합니다, ${response.nickname}님!`)
       navigate("/")
-    } catch (error) {
-      console.error("로그인 실패:", error)
-      alert("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.")
+      
+    } catch (error: any) {
+      console.error("❌ 로그인 실패:", error)
+      console.error("Error response:", error.response?.data)
+      console.error("Error status:", error.response?.status)
+
+      // 에러 메시지 처리
+      let errorMessage = "로그인에 실패했습니다."
+      
+      if (error.response?.data?.error === "ERROR_LOGIN") {
+        errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다."
+      } else if (error.response?.status === 401) {
+        errorMessage = "인증에 실패했습니다. 이메일과 비밀번호를 확인해주세요."
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      alert(errorMessage)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -113,9 +140,10 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 disabled:opacity-50"
             >
-              로그인
+              {loading ? "처리 중..." : "로그인"}
             </Button>
 
             <div className="text-center text-sm space-y-2">

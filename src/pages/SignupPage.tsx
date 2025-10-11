@@ -3,9 +3,12 @@ import { useNavigate, Link } from "react-router"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { signup } from "@/api/auth"
+import { useAuthStore } from "@/lib/auth-store"
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const { login: loginToStore } = useAuthStore()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -13,6 +16,7 @@ export default function SignupPage() {
     name: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -60,14 +64,25 @@ export default function SignupPage() {
     }
 
     try {
-      // TODO: API 연동
-      // await signup({ email: formData.email, password: formData.password, name: formData.name })
+      setLoading(true)
+
+      // API 호출
+      const response = await signup({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name
+      })
+
+      // 회원가입 성공 후 자동 로그인
+      loginToStore(response.user.email, formData.password)
 
       alert("회원가입이 완료되었습니다!")
-      navigate("/login")
+      navigate("/")
     } catch (error) {
       console.error("회원가입 실패:", error)
       alert("회원가입에 실패했습니다. 다시 시도해주세요.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -156,9 +171,10 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 disabled:opacity-50"
             >
-              회원가입
+              {loading ? "처리 중..." : "회원가입"}
             </Button>
 
             <div className="text-center text-sm">
