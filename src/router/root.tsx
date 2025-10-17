@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { lazy, Suspense } from "react";
 import { MainLayout } from "../layouts/MainLayout";
+import { AdminLayout } from "../layouts/AdminLayout";
 
 const Loading = () => <div className="flex items-center justify-center min-h-screen"><div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent"></div></div>
 
@@ -11,6 +12,7 @@ const LoginPage = lazy(() => import("../pages/auth/LoginPage"))
 const SignupPage = lazy(() => import("../pages/auth/SignupPage"))
 const CartPage = lazy(() => import("../pages/cart/CartPage"))
 const MyPage = lazy(() => import("../pages/user/MyPage"))
+const AdminPage = lazy(() => import("../pages/admin/AdminPage"))
 
 const router = createBrowserRouter([
   {
@@ -44,6 +46,16 @@ const router = createBrowserRouter([
       {
         path: "mypage",
         element: <Suspense fallback={<Loading/>}><MyPage/></Suspense>
+      }
+    ]
+  },
+  {
+    path: "admin",
+    Component: AdminLayout,
+    children: [
+      {
+        index: true,
+        element: <Suspense fallback={<Loading/>}><AdminPage/></Suspense>
       }
     ]
   }

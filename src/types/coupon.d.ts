@@ -32,3 +32,15 @@ interface MyCoupon {
   used: boolean
   usedDate?: string
 }
+
+interface CouponCreateRequest {
+  couponCode: string
+  couponName: string
+  couponType: 'FIXED' | 'PERCENT'
+  discountValue: number
+  minOrderAmount?: number
+  maxDiscountAmount?: number
+  startDate: string
+  endDate: string
+  totalQuantity: number
+}

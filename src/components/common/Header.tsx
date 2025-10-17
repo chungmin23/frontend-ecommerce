@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ShoppingCart, Search, User, Menu, LogOut, Sparkles } from "lucide-react"
+import { ShoppingCart, Search, User, Menu, LogOut, Sparkles, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -131,6 +131,18 @@ export function Header() {
               )}
             </Button>
           </Link>
+
+          {isAuthenticated && (
+            <a href="/admin" target="_blank" rel="noopener noreferrer">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              >
+                <Shield className="h-5 w-5" />
+              </Button>
+            </a>
+          )}
 
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />
