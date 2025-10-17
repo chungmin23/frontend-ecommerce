@@ -1,9 +1,7 @@
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useState } from "react"
-import { useCartActions } from "@/hooks/useCartActions"
 import { ProductImage } from "./ProductImage"
 import { ProductInfo } from "./ProductInfo"
-import { ProductActions } from "./ProductActions"
 
 interface ProductCardProps {
   id: string
@@ -27,15 +25,8 @@ export function ProductCard({
   reviewCount = 0,
 }: ProductCardProps) {
   const [isLiked, setIsLiked] = useState(false)
-  const { addToCart } = useCartActions()
 
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault()
-    addToCart({ id, name, price, image })
-    alert(`${name}이(가) 장바구니에 추가되었습니다.`)
-  }
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -64,10 +55,6 @@ export function ProductCard({
           reviewCount={reviewCount}
         />
       </CardContent>
-
-      <CardFooter className="p-0">
-        <ProductActions onAddToCart={handleAddToCart} />
-      </CardFooter>
     </Card>
   )
 }

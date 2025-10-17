@@ -25,6 +25,8 @@ export default function ProductListPage() {
       console.log('📦 Fetching products:', { page, size: pageSize })
       const response = await getProductList({ page, size: pageSize })
       console.log('✅ Product list response:', response)
+      console.log('Response type:', typeof response)
+      console.log('Response keys:', Object.keys(response))
 
       let filteredProducts = response.dtoList
 
@@ -37,8 +39,29 @@ export default function ProductListPage() {
 
       setProducts(filteredProducts)
       setPageData(response)
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ 상품 목록 조회 실패:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url
+      })
+
+      // 에러 타입별 메시지
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        alert('백엔드 서버에 연결할 수 없습니다.\n서버가 http://localhost:8080 에서 실행 중인지 확인해주세요.')
+      } else if (error.response?.status === 401) {
+        alert('로그인이 필요한 서비스입니다.')
+      } else if (error.response?.status === 403) {
+        alert('접근 권한이 없습니다.')
+      } else {
+        alert(`상품 목록 조회 실패: ${error.message}`)
+      }
+
+      // 빈 배열로 설정하여 UI가 깨지지 않도록
+      setProducts([])
+      setPageData(null)
     } finally {
       setLoading(false)
     }
@@ -69,23 +92,41 @@ export default function ProductListPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <ProductCard
-            key={product.pno}
-            id={product.pno.toString()}
-            name={product.pname}
-            price={product.price}
-            image={
-              product.uploadFileNames && product.uploadFileNames.length > 0
-                ? getProductImage(product.uploadFileNames[0])
-                : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop'
+      {products.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-6xl mb-4">📦</div>
+          <h3 className="text-xl font-semibold mb-2">상품이 없습니다</h3>
+          <p className="text-muted-foreground mb-4">
+            {searchQuery
+              ? `"${searchQuery}"에 대한 검색 결과가 없습니다.`
+              : '등록된 상품이 없습니다.'
             }
-            rating={4.5}
-            reviewCount={100}
-          />
-        ))}
-      </div>
+          </p>
+          {searchQuery && (
+            <Button onClick={() => window.location.href = '/products'}>
+              전체 상품 보기
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map((product) => (
+            <ProductCard
+              key={product.pno}
+              id={product.pno.toString()}
+              name={product.pname}
+              price={product.price}
+              image={
+                product.uploadFileNames && product.uploadFileNames.length > 0
+                  ? getProductImage(product.uploadFileNames[0])
+                  : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop'
+              }
+              rating={4.5}
+              reviewCount={100}
+            />
+          ))}
+        </div>
+      )}
 
       {pageData && pageData.totalPage > 1 && (
         <div className="flex items-center justify-center gap-2 mt-12">

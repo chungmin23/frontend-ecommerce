@@ -13,6 +13,9 @@ const SignupPage = lazy(() => import("../pages/auth/SignupPage"))
 const CartPage = lazy(() => import("../pages/cart/CartPage"))
 const MyPage = lazy(() => import("../pages/user/MyPage"))
 const AdminPage = lazy(() => import("../pages/admin/AdminPage"))
+const OrderListPage = lazy(() => import("../pages/order/OrderListPage"))
+const OrderDetailPage = lazy(() => import("../pages/order/OrderDetailPage"))
+const OrderCheckoutPage = lazy(() => import("../pages/order/OrderCheckoutPage"))
 
 const router = createBrowserRouter([
   {
@@ -46,6 +49,18 @@ const router = createBrowserRouter([
       {
         path: "mypage",
         element: <Suspense fallback={<Loading/>}><MyPage/></Suspense>
+      },
+      {
+        path: "orders",
+        element: <Suspense fallback={<Loading/>}><OrderListPage/></Suspense>
+      },
+      {
+        path: "orders/:id",
+        element: <Suspense fallback={<Loading/>}><OrderDetailPage/></Suspense>
+      },
+      {
+        path: "checkout",
+        element: <Suspense fallback={<Loading/>}><OrderCheckoutPage/></Suspense>
       }
     ]
   },

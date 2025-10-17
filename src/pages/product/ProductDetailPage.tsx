@@ -1,21 +1,23 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router"
 import { getProduct, getProductImage } from "@/api/productApi"
+import { changeCartItem } from "@/api/cartApi"
+import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useCartStore } from "@/lib/cart-store"
 import { ShoppingCart, Heart, Star, ArrowLeft } from "lucide-react"
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user, isAuthenticated } = useAuthStore()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLiked, setIsLiked] = useState(false)
   const [quantity, setQuantity] = useState(1)
-  const addItem = useCartStore((state) => state.addItem)
+  const [addingToCart, setAddingToCart] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -37,24 +39,52 @@ export default function ProductDetailPage() {
     }
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return
 
-    for (let i = 0; i < quantity; i++) {
-      addItem({
-        id: product.pno.toString(),
-        name: product.pname,
-        price: product.price,
-        image: product.uploadFileNames && product.uploadFileNames.length > 0
-          ? getProductImage(product.uploadFileNames[0])
-          : '',
-      })
+    // 로그인 체크
+    const accessToken = localStorage.getItem('accessToken')
+    const userStr = localStorage.getItem('user')
+
+    if (!accessToken || !userStr) {
+      if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login')
+      }
+      return
     }
-    alert(`${product.pname} ${quantity}개가 장바구니에 추가되었습니다.`)
+
+    try {
+      setAddingToCart(true)
+
+      const userData = JSON.parse(userStr)
+
+      // 백엔드 API 호출
+      await changeCartItem({
+        email: userData.email,
+        pno: product.pno,
+        qty: quantity,
+      })
+
+      // 장바구니 업데이트 이벤트 발생
+      window.dispatchEvent(new Event('cartUpdated'))
+
+      alert(`${product.pname} ${quantity}개가 장바구니에 추가되었습니다.`)
+    } catch (error: any) {
+      console.error('장바구니 추가 실패:', error)
+
+      if (error.response?.status === 401) {
+        alert('로그인이 필요합니다.')
+        navigate('/login')
+      } else {
+        alert('장바구니 추가에 실패했습니다.\n' + (error.response?.data?.error || error.message))
+      }
+    } finally {
+      setAddingToCart(false)
+    }
   }
 
-  const handleBuyNow = () => {
-    handleAddToCart()
+  const handleBuyNow = async () => {
+    await handleAddToCart()
     navigate('/cart')
   }
 
@@ -214,15 +244,15 @@ export default function ProductDetailPage() {
                   variant="outline"
                   className="flex-1"
                   onClick={handleAddToCart}
-                  disabled={product.stock !== undefined && product.stock === 0}
+                  disabled={(product.stock !== undefined && product.stock === 0) || addingToCart}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
-                  장바구니
+                  {addingToCart ? '추가 중...' : '장바구니'}
                 </Button>
                 <Button
                   className="flex-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
                   onClick={handleBuyNow}
-                  disabled={product.stock !== undefined && product.stock === 0}
+                  disabled={(product.stock !== undefined && product.stock === 0) || addingToCart}
                 >
                   바로 구매
                 </Button>

@@ -19,3 +19,20 @@ export const issueCoupon = (couponCode: string) => {
 export const getMyCoupons = () => {
   return axiosInstance.get<MyCoupon[]>('/coupons/my')
 }
+
+// 선착순 쿠폰 발급
+export const issueLimitedCoupon = (couponCode: string) => {
+  return axiosInstance.post(`/coupons/issue-limited/${couponCode}`)
+}
+
+// 주문 금액별 사용 가능 쿠폰
+export const getAvailableCoupons = (orderAmount: number) => {
+  return axiosInstance.get<Coupon[]>('/coupons/available', {
+    params: { orderAmount }
+  })
+}
+
+// 체크아웃용 사용 가능 쿠폰
+export const getCheckoutCoupons = () => {
+  return axiosInstance.get<MyCoupon[]>('/coupons/checkout')
+}

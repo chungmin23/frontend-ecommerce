@@ -1,24 +1,220 @@
-import { useNavigate } from "react-router"
-import { useCartStore } from "@/lib/cart-store"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
+import { getCartItems, changeCartItem, deleteCartItem } from '@/api/cartApi'
+import { getCheckoutCoupons } from '@/api/couponApi'
+import { useAuthStore } from '@/lib/auth-store'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Trash2, Plus, Minus, ShoppingBag, Tag, Package } from 'lucide-react'
 
 export default function CartPage() {
   const navigate = useNavigate()
-  const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore()
+  const { isAuthenticated, user } = useAuthStore()
 
-  const handleCheckout = () => {
-    if (items.length === 0) {
-      alert("장바구니가 비어있습니다.")
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [coupons, setCoupons] = useState<MyCoupon[]>([])
+  const [selectedCoupon, setSelectedCoupon] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // 실제 토큰 확인
+    const accessToken = localStorage.getItem('accessToken')
+    const user = localStorage.getItem('user')
+
+    console.log('🔐 Auth check:', {
+      isAuthenticated,
+      hasAccessToken: !!accessToken,
+      hasUser: !!user
+    })
+
+    if (!accessToken || !user) {
+      alert('로그인이 필요합니다.')
+      navigate('/login')
       return
     }
 
-    // TODO: 결제 페이지로 이동
-    alert("결제 기능은 준비 중입니다.")
+    fetchCartData()
+  }, [navigate])
+
+  // 장바구니 업데이트 이벤트 리스너
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      fetchCartData()
+    }
+    window.addEventListener('cartUpdated', handleCartUpdate)
+    return () => window.removeEventListener('cartUpdated', handleCartUpdate)
+  }, [])
+
+  const fetchCartData = async () => {
+    try {
+      setLoading(true)
+
+      // 장바구니 조회
+      const cartResponse = await getCartItems()
+      console.log('🛒 Cart response:', cartResponse)
+      console.log('🛒 Cart data:', cartResponse.data)
+      console.log('🛒 Is array?', Array.isArray(cartResponse.data))
+
+      // 응답이 배열인지 확인
+      if (Array.isArray(cartResponse.data)) {
+        setCartItems(cartResponse.data)
+      } else {
+        console.error('Cart response is not an array:', cartResponse.data)
+
+        // 인증 에러인 경우
+        if (cartResponse.data?.error === 'ERROR_ACCESS_TOKEN') {
+          alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.')
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          localStorage.removeItem('user')
+          navigate('/login')
+          return
+        }
+
+        setCartItems([])
+      }
+
+      // 쿠폰 조회
+      try {
+        const couponsResponse = await getCheckoutCoupons()
+        console.log('🎫 Coupons response:', couponsResponse)
+        if (Array.isArray(couponsResponse.data)) {
+          setCoupons(couponsResponse.data)
+        } else {
+          setCoupons([])
+        }
+      } catch (error) {
+        console.log('쿠폰 조회 실패 (계속 진행)')
+        setCoupons([])
+      }
+    } catch (error: any) {
+      console.error('장바구니 조회 실패:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
+
+      // 네트워크 에러 처리
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        alert('백엔드 서버에 연결할 수 없습니다.\n서버가 http://localhost:8080 에서 실행 중인지 확인해주세요.')
+      } else if (error.response?.status === 401) {
+        alert('로그인이 필요합니다.')
+        navigate('/login')
+        return
+      } else {
+        alert('장바구니를 불러오는데 실패했습니다.')
+      }
+
+      setCartItems([])
+      setCoupons([])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (items.length === 0) {
+  const handleUpdateQuantity = async (item: CartItem, newQty: number) => {
+    if (newQty < 1) return
+
+    try {
+      await changeCartItem({
+        email: user?.email || '',
+        pid: item.pno,
+        qty: newQty,
+      })
+      fetchCartData()
+      window.dispatchEvent(new Event('cartUpdated'))
+    } catch (error) {
+      console.error('수량 변경 실패:', error)
+      alert('수량 변경에 실패했습니다.')
+    }
+  }
+
+  const handleRemoveItem = async (cino: number) => {
+    if (!confirm('이 상품을 장바구니에서 삭제하시겠습니까?')) return
+
+    try {
+      await deleteCartItem(cino)
+      fetchCartData()
+      window.dispatchEvent(new Event('cartUpdated'))
+    } catch (error) {
+      console.error('상품 삭제 실패:', error)
+      alert('상품 삭제에 실패했습니다.')
+    }
+  }
+
+  const handleClearCart = async () => {
+    if (!confirm('장바구니를 전체 비우시겠습니까?')) return
+
+    try {
+      for (const item of cartItems) {
+        await deleteCartItem(item.cino)
+      }
+      fetchCartData()
+      window.dispatchEvent(new Event('cartUpdated'))
+    } catch (error) {
+      console.error('장바구니 비우기 실패:', error)
+      alert('장바구니 비우기에 실패했습니다.')
+    }
+  }
+
+  const calculateTotal = () => {
+    // cartItems가 배열인지 확인
+    if (!Array.isArray(cartItems)) {
+      console.error('cartItems is not an array:', cartItems)
+      return { subtotal: 0, discount: 0, total: 0 }
+    }
+
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0)
+    let discount = 0
+
+    if (selectedCoupon) {
+      const coupon = coupons.find(c => c.memberCouponId === selectedCoupon)
+      if (coupon) {
+        if (coupon.couponType === 'PERCENT') {
+          discount = Math.floor(subtotal * (coupon.discountValue / 100))
+          if (coupon.maxDiscountAmount) {
+            discount = Math.min(discount, coupon.maxDiscountAmount)
+          }
+        } else {
+          discount = coupon.discountValue
+        }
+      }
+    }
+
+    return {
+      subtotal,
+      discount,
+      total: subtotal - discount,
+    }
+  }
+
+  const handleCheckout = () => {
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      alert('장바구니가 비어있습니다.')
+      return
+    }
+
+    // 주문 페이지로 이동 (장바구니 아이템 전달)
+    navigate('/checkout', {
+      state: { items: cartItems }
+    })
+  }
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('ko-KR')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-600 border-r-transparent"></div>
+      </div>
+    )
+  }
+
+  if (!Array.isArray(cartItems) || cartItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="text-center space-y-4">
@@ -26,7 +222,7 @@ export default function CartPage() {
           <h2 className="text-2xl font-bold">장바구니가 비어있습니다</h2>
           <p className="text-muted-foreground">상품을 담아보세요!</p>
           <Button
-            onClick={() => navigate("/products")}
+            onClick={() => navigate('/products')}
             className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
           >
             쇼핑 계속하기
@@ -36,13 +232,15 @@ export default function CartPage() {
     )
   }
 
+  const { subtotal, discount, total } = calculateTotal()
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">장바구니</h1>
         <Button
           variant="outline"
-          onClick={clearCart}
+          onClick={handleClearCart}
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <Trash2 className="h-4 w-4 mr-2" />
@@ -53,25 +251,37 @@ export default function CartPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* 장바구니 아이템 목록 */}
         <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
-            <Card key={item.id}>
-              <CardContent className="p-4">
-                <div className="flex gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                장바구니 상품 ({cartItems.length}개)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {cartItems.map((item) => (
+                <div key={item.cino} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
                   {/* 상품 이미지 */}
                   <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                    <img
-                      src={item.image || "https://via.placeholder.com/100"}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
+                    {item.uploadFileNames && item.uploadFileNames.length > 0 ? (
+                      <img
+                        src={`http://localhost:8080/api/products/view/${item.uploadFileNames[0]}`}
+                        alt={item.pname}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        No Image
+                      </div>
+                    )}
                   </div>
 
                   {/* 상품 정보 */}
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                      <h3 className="font-semibold text-lg mb-1">{item.pname}</h3>
                       <p className="text-orange-600 font-bold">
-                        {item.price.toLocaleString()}원
+                        {formatPrice(item.price)}원
                       </p>
                     </div>
 
@@ -82,38 +292,96 @@ export default function CartPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => handleUpdateQuantity(item, item.qty - 1)}
+                          disabled={item.qty <= 1}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
                         <span className="w-12 text-center font-semibold">
-                          {item.quantity}
+                          {item.qty}
                         </span>
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item, item.qty + 1)}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
 
-                      {/* 삭제 버튼 */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-4">
+                        <p className="font-bold text-lg">
+                          {formatPrice(item.price * item.qty)}원
+                        </p>
+                        {/* 삭제 버튼 */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveItem(item.cino)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* 쿠폰 선택 */}
+          {coupons.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="h-5 w-5" />
+                  쿠폰 적용
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedCoupon(null)}
+                    className={`w-full p-3 border rounded-lg text-left transition-colors ${
+                      selectedCoupon === null ? 'border-orange-600 bg-orange-50' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    쿠폰 사용 안 함
+                  </button>
+                  {coupons.filter(c => !c.used).map((coupon) => (
+                    <button
+                      key={coupon.memberCouponId}
+                      onClick={() => setSelectedCoupon(coupon.memberCouponId)}
+                      className={`w-full p-3 border rounded-lg text-left transition-colors ${
+                        selectedCoupon === coupon.memberCouponId ? 'border-orange-600 bg-orange-50' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{coupon.couponName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {coupon.couponType === 'PERCENT'
+                              ? `${coupon.discountValue}% 할인`
+                              : `${formatPrice(coupon.discountValue)}원 할인`}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">
+                          {new Date(coupon.endDate).toLocaleDateString()}까지
+                        </Badge>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {coupons.filter(c => !c.used).length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">
+                    사용 가능한 쿠폰이 없습니다
+                  </p>
+                )}
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
 
         {/* 주문 요약 */}
@@ -125,12 +393,20 @@ export default function CartPage() {
               <div className="space-y-2 py-4 border-t border-b">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">상품 수</span>
-                  <span className="font-medium">{items.reduce((sum, item) => sum + item.quantity, 0)}개</span>
+                  <span className="font-medium">
+                    {Array.isArray(cartItems) ? cartItems.reduce((sum, item) => sum + item.qty, 0) : 0}개
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">상품 금액</span>
-                  <span className="font-medium">{getTotalPrice().toLocaleString()}원</span>
+                  <span className="font-medium">{formatPrice(subtotal)}원</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">쿠폰 할인</span>
+                    <span className="font-medium text-red-600">-{formatPrice(discount)}원</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">배송비</span>
                   <span className="font-medium text-green-600">무료</span>
@@ -140,7 +416,7 @@ export default function CartPage() {
               <div className="flex justify-between text-lg font-bold">
                 <span>총 결제금액</span>
                 <span className="text-orange-600 text-2xl">
-                  {getTotalPrice().toLocaleString()}원
+                  {formatPrice(total)}원
                 </span>
               </div>
 
@@ -148,17 +424,26 @@ export default function CartPage() {
                 <Button
                   className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
                   onClick={handleCheckout}
+                  size="lg"
                 >
-                  주문하기
+                  주문하기 ({formatPrice(total)}원)
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate("/products")}
+                  onClick={() => navigate('/products')}
                 >
                   쇼핑 계속하기
                 </Button>
               </div>
+
+              {selectedCoupon && (
+                <div className="mt-4 p-3 bg-orange-50 rounded-lg">
+                  <p className="text-sm font-medium text-orange-800">
+                    🎉 쿠폰 할인 {formatPrice(discount)}원 적용!
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
