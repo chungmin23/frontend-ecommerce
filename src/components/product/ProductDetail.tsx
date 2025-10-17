@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Star, ShoppingCart, Minus, Plus, ArrowLeft } from 'lucide-react';
-import { getProduct, getProductImage } from '../api/productApi';
-import { changeCartItem } from '../api/cartApi';
+import { getProduct, getProductImage } from '@/api/productApi';
+import { changeCartItem } from '@/api/cartApi';
 
 const ProductDetail: React.FC = () => {
   const { pno } = useParams<{ pno: string }>();
@@ -21,7 +21,7 @@ const ProductDetail: React.FC = () => {
     try {
       setLoading(true);
       const response = await getProduct(pno);
-      setProduct(response.data);
+      setProduct(response);
     } catch (error) {
       console.error('상품 조회 실패:', error);
       alert('상품 정보를 불러오는데 실패했습니다.');

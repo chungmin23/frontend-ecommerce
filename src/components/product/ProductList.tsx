@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Star, ShoppingCart as CartIcon } from 'lucide-react';
-import { getProductList, getProductImage } from '../api/productApi';
-import { changeCartItem } from '../api/cartApi';
+import { getProductList, getProductImage } from '@/api/productApi';
+import { changeCartItem } from '@/api/cartApi';
 
 const ProductList: React.FC = () => {
   const navigate = useNavigate();
@@ -21,8 +21,8 @@ const ProductList: React.FC = () => {
     try {
       setLoading(true);
       const response = await getProductList({ page, size: 6 });
-      setProducts(response.data.dtoList);
-      setTotalPages(response.data.totalPage);
+      setProducts(response.dtoList);
+      setTotalPages(response.totalPage);
     } catch (error) {
       console.error('상품 목록 조회 실패:', error);
       alert('상품 목록을 불러오는데 실패했습니다.');

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router"
-import { ProductCard } from "@/components/ProductCard"
+import { ProductCard } from "@/components/product/ProductCard"
 import { getProductList, getProductImage } from "@/api/productApi"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"

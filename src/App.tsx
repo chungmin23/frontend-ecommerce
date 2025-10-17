@@ -1,8 +1,8 @@
-import { Header } from "@/components/Header"
-import { HeroSection } from "@/components/HeroSection"
-import { CategorySection } from "@/components/CategorySection"
-import { ProductGrid } from "@/components/ProductGrid"
-import { Footer } from "@/components/Footer"
+import { Header } from "@/components/common/Header"
+import { HeroSection } from "@/components/common/HeroSection"
+import { CategorySection } from "@/components/product/CategorySection"
+import { ProductGrid } from "@/components/product/ProductGrid"
+import { Footer } from "@/components/common/Footer"
 
 function App() {
   return (

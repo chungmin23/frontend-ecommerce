@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyOrders, cancelOrder } from '../api/orderApi';
+import { getMyOrders, cancelOrder } from '@/api/orderApi';
 
 interface Order {
   ono: number;

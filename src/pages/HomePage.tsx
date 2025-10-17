@@ -1,6 +1,6 @@
-import { HeroSection } from "@/components/HeroSection"
-import { CategorySection } from "@/components/CategorySection"
-import { ProductGrid } from "@/components/ProductGrid"
+import { HeroSection } from "@/components/common/HeroSection"
+import { CategorySection } from "@/components/product/CategorySection"
+import { ProductGrid } from "@/components/product/ProductGrid"
 
 export default function HomePage() {
   return (

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
-import { getCartItems, changeCartItem, deleteCartItem } from '../api/cartApi';
-import { getProductImage } from '../api/productApi';
+import { getCartItems, changeCartItem, deleteCartItem } from '@/api/cartApi';
+import { getProductImage } from '@/api/productApi';
 
 interface CartItem {
   cino: number;

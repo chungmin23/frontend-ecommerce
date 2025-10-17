@@ -13,7 +13,7 @@ import {
 import { useCartStore } from "@/lib/cart-store"
 import { useAuthStore } from "@/lib/auth-store"
 import { Link, useNavigate } from "react-router"
-import { RecommendationChat } from "@/components/RecommendationChat"
+import { RecommendationChat } from "@/components/recommendation/RecommendationChat"
 
 export function Header() {
   const navigate = useNavigate()

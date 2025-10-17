@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getActiveCoupons, getMyCoupons, issueCoupon } from '../api/couponApi';
+import { getActiveCoupons, getMyCoupons, issueCoupon } from '@/api/couponApi';
 
 interface Coupon {
   couponId?: number;

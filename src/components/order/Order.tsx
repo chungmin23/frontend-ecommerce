@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { createOrder } from '../api/orderApi';
-import { getMyCoupons } from '../api/couponApi';
+import { createOrder } from '@/api/orderApi';
+import { getMyCoupons } from '@/api/couponApi';
 
 interface OrderItem {
   pno: number;

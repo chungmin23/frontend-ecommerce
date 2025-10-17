@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getOrderByNumber, cancelOrder } from '../api/orderApi';
-import { getPaymentByOrderNumber, cancelPayment } from '../api/paymentApi';
+import { getOrderByNumber, cancelOrder } from '@/api/orderApi';
+import { getPaymentByOrderNumber, cancelPayment } from '@/api/paymentApi';
 
 interface OrderItem {
   pname: string;

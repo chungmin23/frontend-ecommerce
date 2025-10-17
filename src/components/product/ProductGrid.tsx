@@ -15,7 +15,7 @@ export function ProductGrid() {
     try {
       setLoading(true)
       const response = await getProductList({ page: 1, size: 8 })
-      setProducts(response.data.dtoList)
+      setProducts(response.dtoList)
     } catch (error) {
       console.error('상품 목록 조회 실패:', error)
     } finally {

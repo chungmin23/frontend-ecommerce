@@ -54,7 +54,7 @@ export default function CartPage() {
         {/* 장바구니 아이템 목록 */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <Card key={`${item.id}-${item.addedAt}`}>
+            <Card key={item.id}>
               <CardContent className="p-4">
                 <div className="flex gap-4">
                   {/* 상품 이미지 */}
@@ -82,7 +82,7 @@ export default function CartPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.addedAt, Math.max(1, item.quantity - 1))}
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -93,7 +93,7 @@ export default function CartPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.addedAt, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -103,7 +103,7 @@ export default function CartPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeItem(item.id, item.addedAt)}
+                        onClick={() => removeItem(item.id)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
