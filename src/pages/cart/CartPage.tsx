@@ -59,7 +59,7 @@ export default function CartPage() {
         console.error('Cart response is not an array:', cartResponse.data)
 
         // 인증 에러인 경우
-        if (cartResponse.data?.error === 'ERROR_ACCESS_TOKEN') {
+        if ((cartResponse.data as any)?.error === 'ERROR_ACCESS_TOKEN') {
           alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.')
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')

@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
 
       // ✅ 실제 토큰 기반 로그인 체크
-      login: async (email: string, password: string) => {
+      login: async () => {
         // LoginPage에서 이미 API를 호출하고 토큰을 저장함
         // 여기서는 localStorage의 토큰과 유저 정보를 확인
         const accessToken = localStorage.getItem('accessToken')
@@ -50,7 +50,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       // ✅ 회원가입도 동일하게 처리
-      signup: async (email: string, password: string, name: string) => {
+      signup: async () => {
         const accessToken = localStorage.getItem('accessToken')
         const userStr = localStorage.getItem('user')
 

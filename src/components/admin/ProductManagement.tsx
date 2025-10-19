@@ -76,7 +76,7 @@ export default function ProductManagement() {
     setEditingProduct(product)
     setFormData({
       pname: product.pname,
-      pdesc: product.pdesc,
+      pdesc: product.pdesc || '',
       price: product.price.toString(),
       stock: product.stock?.toString() || '',
     })
