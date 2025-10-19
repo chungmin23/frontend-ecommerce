@@ -31,7 +31,8 @@ export const updateOrderStatus = (ono: number, status: string) => {
   return axiosInstance.put(`/orders/${ono}/status`, { status })
 }
 
-// 모든 주문 목록 조회 (관리자용) - 전체 조회
+// 모든 주문 목록 조회 (관리자용)
+// TODO: 백엔드에 /orders/admin 또는 /orders 엔드포인트가 추가되면 변경
 export const getOrderList = (params?: PageParam): Promise<PageResponseDTO<Order>> => {
-  return axiosInstance.get(`/orders`, { params })
+  return axiosInstance.get(`/orders/my`, { params })
 }

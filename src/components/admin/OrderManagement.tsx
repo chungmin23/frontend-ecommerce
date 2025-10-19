@@ -19,7 +19,7 @@ export default function OrderManagement() {
   const fetchOrders = async () => {
     try {
       const response = await getOrderList({ page: 1, size: 100 })
-      const orderList = response.dtoList
+      const orderList = response?.dtoList || []
       setOrders(orderList)
 
       // Calculate stats
@@ -34,6 +34,7 @@ export default function OrderManagement() {
       })
     } catch (error) {
       console.error('Failed to fetch orders:', error)
+      setOrders([])
     }
   }
 
@@ -49,6 +50,10 @@ export default function OrderManagement() {
   }
 
   const getFilteredOrders = () => {
+    if (!orders || !Array.isArray(orders)) {
+      return []
+    }
+
     switch (activeTab) {
       case 'pending':
         return orders.filter(o => o.status === 'PENDING' || o.status === 'PREPARING' || o.status === 'SHIPPING')
