@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getOrderList, updateOrderStatus } from '@/api/adminApi'
 
-type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+type AdminOrderStatus = 'PENDING' | 'PAID' | 'PREPARING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED'
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -19,12 +19,12 @@ export default function OrderManagement() {
   const fetchOrders = async () => {
     try {
       const response = await getOrderList({ page: 1, size: 100 })
-      const orderList = response.data.dtoList
+      const orderList = response.dtoList
       setOrders(orderList)
 
       // Calculate stats
       const newCount = orderList.filter(o => o.status === 'PENDING').length
-      const pendingCount = orderList.filter(o => o.status === 'PROCESSING').length
+      const pendingCount = orderList.filter(o => o.status === 'PREPARING' || o.status === 'SHIPPING').length
       const deliveredCount = orderList.filter(o => o.status === 'DELIVERED').length
 
       setStats({
@@ -37,7 +37,7 @@ export default function OrderManagement() {
     }
   }
 
-  const handleStatusChange = async (ono: number, newStatus: OrderStatus) => {
+  const handleStatusChange = async (ono: number, newStatus: AdminOrderStatus) => {
     try {
       await updateOrderStatus(ono, newStatus)
       alert('Order status updated successfully!')
@@ -51,7 +51,7 @@ export default function OrderManagement() {
   const getFilteredOrders = () => {
     switch (activeTab) {
       case 'pending':
-        return orders.filter(o => o.status === 'PENDING' || o.status === 'PROCESSING')
+        return orders.filter(o => o.status === 'PENDING' || o.status === 'PREPARING' || o.status === 'SHIPPING')
       case 'delivered':
         return orders.filter(o => o.status === 'DELIVERED')
       case 'cancelled':
@@ -67,7 +67,9 @@ export default function OrderManagement() {
         return 'text-green-600 bg-green-50'
       case 'CANCELLED':
         return 'text-red-600 bg-red-50'
-      case 'PROCESSING':
+      case 'PREPARING':
+      case 'SHIPPING':
+      case 'PAID':
       case 'PENDING':
         return 'text-blue-600 bg-blue-50'
       default:
@@ -219,7 +221,7 @@ export default function OrderManagement() {
                   {new Date(order.orderDate).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
-                  {order.memberEmail || 'N/A'}
+                  손님
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   ${order.totalAmount} USD
@@ -236,7 +238,7 @@ export default function OrderManagement() {
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                     )}
-                    {(order.status === 'PENDING' || order.status === 'PROCESSING') && (
+                    {(order.status === 'PENDING' || order.status === 'PREPARING' || order.status === 'SHIPPING' || order.status === 'PAID') && (
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                       </svg>
@@ -247,12 +249,13 @@ export default function OrderManagement() {
                 <td className="px-6 py-4">
                   <select
                     value={order.status}
-                    onChange={(e) => handleStatusChange(order.ono, e.target.value as OrderStatus)}
+                    onChange={(e) => handleStatusChange(order.ono, e.target.value as AdminOrderStatus)}
                     className="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-purple-600"
                   >
                     <option value="PENDING">Pending</option>
-                    <option value="PROCESSING">Processing</option>
-                    <option value="SHIPPED">Shipped</option>
+                    <option value="PAID">Paid</option>
+                    <option value="PREPARING">Preparing</option>
+                    <option value="SHIPPING">Shipping</option>
                     <option value="DELIVERED">Delivered</option>
                     <option value="CANCELLED">Cancelled</option>
                   </select>

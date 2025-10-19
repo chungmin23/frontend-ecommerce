@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router"
 import { getProduct, getProductImage } from "@/api/productApi"
 import { changeCartItem } from "@/api/cartApi"
-import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +10,6 @@ import { ShoppingCart, Heart, Star, ArrowLeft } from "lucide-react"
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, isAuthenticated } = useAuthStore()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)

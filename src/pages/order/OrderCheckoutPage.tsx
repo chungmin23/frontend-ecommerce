@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 import { createOrder } from '@/api/orderApi'
-import { getCheckoutCoupons } from '@/api/couponApi'
+import { getCheckoutCoupons, issueCoupon } from '@/api/couponApi'
 import { getCartItems, deleteCartItem } from '@/api/cartApi'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/lib/auth-store'
-import { ShoppingCart, MapPin, CreditCard, Tag, ArrowLeft } from 'lucide-react'
+import { ShoppingCart, MapPin, CreditCard, Tag, ArrowLeft, Plus } from 'lucide-react'
 
 export default function OrderCheckoutPage() {
   const navigate = useNavigate()
@@ -20,6 +20,8 @@ export default function OrderCheckoutPage() {
   const [selectedCoupon, setSelectedCoupon] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [issuingCoupon, setIssuingCoupon] = useState(false)
 
   const [deliveryInfo, setDeliveryInfo] = useState({
     receiverName: '',
@@ -63,9 +65,11 @@ export default function OrderCheckoutPage() {
       // 사용 가능한 쿠폰 조회
       try {
         const couponsResponse = await getCheckoutCoupons()
-        setCoupons(couponsResponse.data)
+        console.log('쿠폰 응답:', couponsResponse.data)
+        setCoupons(Array.isArray(couponsResponse.data) ? couponsResponse.data : [])
       } catch (error) {
         console.log('쿠폰 조회 실패 (계속 진행)')
+        setCoupons([])
       }
     } catch (error) {
       console.error('체크아웃 데이터 조회 실패:', error)
@@ -76,21 +80,54 @@ export default function OrderCheckoutPage() {
     }
   }
 
+  const handleIssueCoupon = async () => {
+    if (!couponCode.trim()) {
+      alert('쿠폰 코드를 입력해주세요.')
+      return
+    }
+
+    try {
+      setIssuingCoupon(true)
+      await issueCoupon(couponCode)
+      alert('쿠폰이 발급되었습니다!')
+
+      // 쿠폰 목록 다시 조회
+      const couponsResponse = await getCheckoutCoupons()
+      setCoupons(Array.isArray(couponsResponse.data) ? couponsResponse.data : [])
+      setCouponCode('')
+    } catch (error: any) {
+      console.error('쿠폰 발급 실패:', error)
+      alert(error.response?.data?.error || '쿠폰 발급에 실패했습니다.')
+    } finally {
+      setIssuingCoupon(false)
+    }
+  }
+
   const calculateTotal = () => {
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0)
     let discount = 0
 
-    if (selectedCoupon) {
+    console.log('💰 할인 계산:', {
+      selectedCoupon,
+      couponsCount: coupons.length,
+      couponsArray: Array.isArray(coupons),
+      coupons: coupons
+    })
+
+    if (selectedCoupon && Array.isArray(coupons)) {
       const coupon = coupons.find(c => c.memberCouponId === selectedCoupon)
+      console.log('🎫 선택된 쿠폰:', coupon)
+
       if (coupon) {
         if (coupon.couponType === 'PERCENT') {
-          discount = Math.floor(subtotal * (coupon.discountValue / 100))
+          discount = Math.floor(subtotal * ((coupon.discountValue || 0) / 100))
           if (coupon.maxDiscountAmount) {
             discount = Math.min(discount, coupon.maxDiscountAmount)
           }
         } else {
-          discount = coupon.discountValue
+          discount = coupon.discountValue || 0
         }
+        console.log('💵 계산된 할인금액:', discount)
       }
     }
 
@@ -275,25 +312,51 @@ export default function OrderCheckoutPage() {
             </Card>
 
             {/* 쿠폰 선택 */}
-            {coupons.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Tag className="h-5 w-5" />
-                    쿠폰 선택
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => setSelectedCoupon(null)}
-                      className={`w-full p-3 border rounded-lg text-left transition-colors ${
-                        selectedCoupon === null ? 'border-orange-600 bg-orange-50' : 'hover:bg-gray-50'
-                      }`}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="h-5 w-5" />
+                  쿠폰 선택
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* 쿠폰 코드 입력 */}
+                <div className="mb-4 pb-4 border-b">
+                  <label className="block text-sm font-medium mb-2">쿠폰 코드 입력</label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="쿠폰 코드를 입력하세요"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleIssueCoupon()
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleIssueCoupon}
+                      disabled={issuingCoupon || !couponCode.trim()}
+                      variant="outline"
                     >
-                      쿠폰 사용 안 함
-                    </button>
-                    {coupons.filter(c => !c.used).map((coupon) => (
+                      <Plus className="h-4 w-4 mr-1" />
+                      {issuingCoupon ? '등록 중...' : '등록'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 보유 쿠폰 목록 */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedCoupon(null)}
+                    className={`w-full p-3 border rounded-lg text-left transition-colors ${
+                      selectedCoupon === null ? 'border-orange-600 bg-orange-50' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    쿠폰 사용 안 함
+                  </button>
+                  {Array.isArray(coupons) && coupons.filter(c => !c.used).length > 0 ? (
+                    coupons.filter(c => !c.used).map((coupon) => (
                       <button
                         key={coupon.memberCouponId}
                         onClick={() => setSelectedCoupon(coupon.memberCouponId)}
@@ -306,8 +369,8 @@ export default function OrderCheckoutPage() {
                             <p className="font-medium">{coupon.couponName}</p>
                             <p className="text-sm text-muted-foreground">
                               {coupon.couponType === 'PERCENT'
-                                ? `${coupon.discountValue}% 할인`
-                                : `${formatPrice(coupon.discountValue)}원 할인`}
+                                ? `${coupon.discountValue || 0}% 할인`
+                                : `${formatPrice(coupon.discountValue || 0)}원 할인`}
                             </p>
                           </div>
                           <Badge variant="secondary">
@@ -315,11 +378,15 @@ export default function OrderCheckoutPage() {
                           </Badge>
                         </div>
                       </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      사용 가능한 쿠폰이 없습니다
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* 결제 방법 */}
             <Card>

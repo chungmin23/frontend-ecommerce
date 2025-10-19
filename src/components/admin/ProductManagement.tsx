@@ -21,7 +21,7 @@ export default function ProductManagement() {
   const fetchProducts = async () => {
     try {
       const response = await getProductList({ page: 1, size: 100 })
-      setProducts(response.data.dtoList)
+      setProducts(response.dtoList)
     } catch (error) {
       console.error('Failed to fetch products:', error)
     }

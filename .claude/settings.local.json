@@ -10,7 +10,9 @@
       "Read(//c/Users/user/Downloads/shopping-mall (1)/components/**)",
       "Read(//c/Users/user/Downloads/shopping-mall (1)/src/**)",
       "Read(//c/Users/user/Downloads/shopping-mall (1)/components/ui/**)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

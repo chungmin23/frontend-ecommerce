@@ -28,6 +28,7 @@ interface MyCoupon {
   couponType: 'FIXED' | 'PERCENT'
   discountValue: number
   minOrderAmount?: number
+  maxDiscountAmount?: number
   endDate: string
   used: boolean
   usedDate?: string

@@ -1,20 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { getCartItems, changeCartItem, deleteCartItem } from '@/api/cartApi'
-import { getCheckoutCoupons } from '@/api/couponApi'
 import { useAuthStore } from '@/lib/auth-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Trash2, Plus, Minus, ShoppingBag, Tag, Package } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, Package } from 'lucide-react'
 
 export default function CartPage() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuthStore()
 
   const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [coupons, setCoupons] = useState<MyCoupon[]>([])
-  const [selectedCoupon, setSelectedCoupon] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -74,20 +70,6 @@ export default function CartPage() {
 
         setCartItems([])
       }
-
-      // 쿠폰 조회
-      try {
-        const couponsResponse = await getCheckoutCoupons()
-        console.log('🎫 Coupons response:', couponsResponse)
-        if (Array.isArray(couponsResponse.data)) {
-          setCoupons(couponsResponse.data)
-        } else {
-          setCoupons([])
-        }
-      } catch (error) {
-        console.log('쿠폰 조회 실패 (계속 진행)')
-        setCoupons([])
-      }
     } catch (error: any) {
       console.error('장바구니 조회 실패:', error)
       console.error('Error details:', {
@@ -108,7 +90,6 @@ export default function CartPage() {
       }
 
       setCartItems([])
-      setCoupons([])
     } finally {
       setLoading(false)
     }
@@ -120,7 +101,7 @@ export default function CartPage() {
     try {
       await changeCartItem({
         email: user?.email || '',
-        pid: item.pno,
+        pno: item.pno,
         qty: newQty,
       })
       fetchCartData()
@@ -163,30 +144,14 @@ export default function CartPage() {
     // cartItems가 배열인지 확인
     if (!Array.isArray(cartItems)) {
       console.error('cartItems is not an array:', cartItems)
-      return { subtotal: 0, discount: 0, total: 0 }
+      return { subtotal: 0, total: 0 }
     }
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0)
-    let discount = 0
-
-    if (selectedCoupon) {
-      const coupon = coupons.find(c => c.memberCouponId === selectedCoupon)
-      if (coupon) {
-        if (coupon.couponType === 'PERCENT') {
-          discount = Math.floor(subtotal * (coupon.discountValue / 100))
-          if (coupon.maxDiscountAmount) {
-            discount = Math.min(discount, coupon.maxDiscountAmount)
-          }
-        } else {
-          discount = coupon.discountValue
-        }
-      }
-    }
 
     return {
       subtotal,
-      discount,
-      total: subtotal - discount,
+      total: subtotal,
     }
   }
 
@@ -232,7 +197,7 @@ export default function CartPage() {
     )
   }
 
-  const { subtotal, discount, total } = calculateTotal()
+  const { subtotal, total } = calculateTotal()
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -330,58 +295,6 @@ export default function CartPage() {
               ))}
             </CardContent>
           </Card>
-
-          {/* 쿠폰 선택 */}
-          {coupons.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Tag className="h-5 w-5" />
-                  쿠폰 적용
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setSelectedCoupon(null)}
-                    className={`w-full p-3 border rounded-lg text-left transition-colors ${
-                      selectedCoupon === null ? 'border-orange-600 bg-orange-50' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    쿠폰 사용 안 함
-                  </button>
-                  {coupons.filter(c => !c.used).map((coupon) => (
-                    <button
-                      key={coupon.memberCouponId}
-                      onClick={() => setSelectedCoupon(coupon.memberCouponId)}
-                      className={`w-full p-3 border rounded-lg text-left transition-colors ${
-                        selectedCoupon === coupon.memberCouponId ? 'border-orange-600 bg-orange-50' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{coupon.couponName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {coupon.couponType === 'PERCENT'
-                              ? `${coupon.discountValue}% 할인`
-                              : `${formatPrice(coupon.discountValue)}원 할인`}
-                          </p>
-                        </div>
-                        <Badge variant="secondary">
-                          {new Date(coupon.endDate).toLocaleDateString()}까지
-                        </Badge>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                {coupons.filter(c => !c.used).length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
-                    사용 가능한 쿠폰이 없습니다
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* 주문 요약 */}
@@ -401,12 +314,6 @@ export default function CartPage() {
                   <span className="text-muted-foreground">상품 금액</span>
                   <span className="font-medium">{formatPrice(subtotal)}원</span>
                 </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">쿠폰 할인</span>
-                    <span className="font-medium text-red-600">-{formatPrice(discount)}원</span>
-                  </div>
-                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">배송비</span>
                   <span className="font-medium text-green-600">무료</span>
@@ -436,14 +343,6 @@ export default function CartPage() {
                   쇼핑 계속하기
                 </Button>
               </div>
-
-              {selectedCoupon && (
-                <div className="mt-4 p-3 bg-orange-50 rounded-lg">
-                  <p className="text-sm font-medium text-orange-800">
-                    🎉 쿠폰 할인 {formatPrice(discount)}원 적용!
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

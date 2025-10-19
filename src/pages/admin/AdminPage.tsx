@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import ProductManagement from '@/components/admin/ProductManagement'
 import CouponManagement from '@/components/admin/CouponManagement'
 import OrderManagement from '@/components/admin/OrderManagement'
 
 export default function AdminPage() {
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'products' | 'coupons' | 'orders'>('orders')
 
   return (

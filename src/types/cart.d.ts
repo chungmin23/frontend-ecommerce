@@ -5,6 +5,7 @@ interface CartItem {
   price: number
   qty: number
   imageFile?: string
+  uploadFileNames?: string[]
 }
 
 interface CartItemData {

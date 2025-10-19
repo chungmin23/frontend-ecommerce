@@ -1,10 +1,8 @@
 import axiosInstance from './axios'
 
-const prefix = '/admin'
-
-// Product Management
+// Product Management (관리자 권한 필요)
 export const createProduct = (formData: FormData) => {
-  return axiosInstance.post(`${prefix}/products`, formData, {
+  return axiosInstance.post(`/products`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -12,7 +10,7 @@ export const createProduct = (formData: FormData) => {
 }
 
 export const updateProduct = (pno: number, formData: FormData) => {
-  return axiosInstance.put(`${prefix}/products/${pno}`, formData, {
+  return axiosInstance.put(`/products/${pno}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -20,19 +18,20 @@ export const updateProduct = (pno: number, formData: FormData) => {
 }
 
 export const deleteProduct = (pno: number) => {
-  return axiosInstance.delete(`${prefix}/products/${pno}`)
+  return axiosInstance.delete(`/products/${pno}`)
 }
 
-// Coupon Management
+// Coupon Management (관리자 권한 필요)
 export const createCoupon = (coupon: CouponCreateRequest) => {
-  return axiosInstance.post(`${prefix}/coupons`, coupon)
+  return axiosInstance.post(`/coupons/`, coupon)
 }
 
 // Order Management
 export const updateOrderStatus = (ono: number, status: string) => {
-  return axiosInstance.put(`${prefix}/orders/${ono}/status`, { status })
+  return axiosInstance.put(`/orders/${ono}/status`, { status })
 }
 
-export const getOrderList = (params?: PageParam): Promise<{ data: PageResponseDTO<Order> }> => {
-  return axiosInstance.get(`${prefix}/orders/list`, { params })
+// 모든 주문 목록 조회 (관리자용) - 전체 조회
+export const getOrderList = (params?: PageParam): Promise<PageResponseDTO<Order>> => {
+  return axiosInstance.get(`/orders`, { params })
 }
